@@ -1,19 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" >
-<head>
-  <meta charset="UTF-8">
-  <title>Untitled</title>
-  
-
-</head>
-<body>
-<!-- partial:index.partial.html -->
-<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Futures Assets Mockup — with 6M Trend Profit Cards</title>
+  <title>Futures Assets Mockup — with 6M Trend Profit Cards (Main Coins Added, MAIN icon removed)</title>
 
   <!-- Fonts & Icons -->
   <link href="https://db.onlinewebfonts.com/c/d05c19ccecf7003d248c60ffd6b5e8f7?family=Binance+PLEX" rel="stylesheet"/>
@@ -39,6 +29,9 @@
       --seg-r: 10px;
       --seg-thumb-r: 6px;
       --seg-font: 12px;
+
+      /* widen profit cards evenly from both sides */
+      --card-wide: 8px; /* increase/decrease to control extra width per side */
     }
 
     *{margin:0;padding:0;box-sizing:border-box}
@@ -137,14 +130,24 @@
 
     .feed{display:flex;flex-direction:column;gap:8px;width:100%;max-height:calc(100vh - 300px);overflow-y:auto;padding:12px 0 20px;background:var(--bg-base)}
     .feed::-webkit-scrollbar{display:none}
-    .empty-state{margin:0;background:var(--panel-bg);border-radius:10px;padding:20px;text-align:center;border:1px solid #2b2f36}
+    .empty-state{margin:0 0;background:var(--panel-bg);border-radius:10px;padding:20px;text-align:center;border:1px solid #2b2f36}
     .empty-state i{font-size:28px;opacity:.9;margin-bottom:10px;display:inline-block}
     .empty-state h4{font-size:14px;margin-bottom:6px}
     .empty-state p{font-size:12px;color:#A1A6B0;margin-bottom:12px}
     .empty-state .cta{background:#F3BA2F;color:#1E2128;font-size:12px;padding:8px 12px;border-radius:6px;display:inline-flex;align-items:center;gap:6px}
 
     /* ====== PROFITS CARD (6M Trend Trades design) ====== */
-    .trade-panel { background: var(--panel-bg); padding: 12px; border-radius: 8px; border: none; box-shadow: none; }
+    .trade-panel {
+      background: var(--panel-bg);
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      box-shadow: none;
+
+      /* make card wider from both sides (evenly) */
+      margin-left: calc(-1 * var(--card-wide));
+      margin-right: calc(-1 * var(--card-wide));
+    }
     .trade-panel .header { display: flex; align-items: center; margin-bottom: 8px; }
     .icon-buy, .icon-sell {
       color: #fff; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
@@ -154,6 +157,7 @@
     .icon-sell { background: var(--text-red); }
     .symbol { font-size: 14px; font-weight: 600; margin-right: 6px; color:#fff; }
     .tag { background: var(--secondary-bg); color: var(--text-secondary); font-size: 10px; padding: 1px 4px; margin-right: 4px; text-transform: uppercase; border-radius: 3px; }
+    /* MAIN tag styling removed */
     .exclamations { display: flex; margin-left: 6px; }
     .exclamations span { position: relative; width: 2px; height: 10px; background: var(--secondary-bg); margin: 0 1px; border-radius: 1px; transition: background 0.3s ease; }
     .exclamations span::after { content: ''; position: absolute; bottom: -3px; left: 50%; transform: translateX(-50%); width: 2px; height: 2px; background: inherit; border-radius: 50%; }
@@ -361,7 +365,7 @@
 
         for (const s of json.symbols) {
           const sym = s.symbol;
-          if (!seedSymbols.includes(sym)) continue;
+          if (!allSymbols.includes(sym)) continue;
           let tickSize = '0.01';
           let stepSize = '0.001';
           let minQty = 0;
@@ -402,7 +406,13 @@
       return joinIntDec(i, d);
     }
 
-    /* ===== Symbols (FTMUSDT REMOVED) + rates ===== */
+    /* ===== MAIN (PRIME) COINS for profit focus ===== */
+    const primeSymbols = [
+      'BTCUSDT','ETHUSDT','BNBUSDT','SOLUSDT','XRPUSDT','DOGEUSDT','TONUSDT','ADAUSDT','AVAXUSDT','TRXUSDT',
+      'LINKUSDT','DOTUSDT','NEARUSDT','OPUSDT','ARBUSDT','APTUSDT','INJUSDT','RNDRUSDT','SEIUSDT','TIAUSDT','ONDOUSDT'
+    ];
+
+    /* ===== Symbols pool (FTMUSDT REMOVED) + rates ===== */
     const seedSymbols = [
       'BTCUSDT','ETHUSDT','BNBUSDT','ADAUSDT','SOLUSDT','XRPUSDT','DOTUSDT','LTCUSDT',
       'LINKUSDT','DOGEUSDT','AAVEUSDT','SUSHIUSDT','SHIBUSDT','COMPUSDT','ETCUSDT','ZECUSDT',
@@ -413,6 +423,9 @@
       'FLOKIUSDT','WIFUSDT','ARKUSDT','IOTAUSDT','KASUSDT','PYTHUSDT','STRKUSDT','JUPUSDT',
       'APEUSDT','BLURUSDT','SEIUSDT','TIAUSDT','TONUSDT','ONDOUSDT'
     ];
+    // merged unique list (ensures primes are included)
+    const allSymbols = Array.from(new Set([...primeSymbols, ...seedSymbols]));
+
     const maintenanceMarginRates = {
       BTCUSDT: 0.004, ETHUSDT: 0.005, BNBUSDT: 0.005, ADAUSDT: 0.010, SOLUSDT: 0.008, XRPUSDT: 0.010,
       DOTUSDT: 0.010, LTCUSDT: 0.010, LINKUSDT: 0.010, DOGEUSDT: 0.012, AAVEUSDT: 0.010, SUSHIUSDT: 0.015,
@@ -433,8 +446,9 @@
     const upnlShort = (mark, entry, qty) => (entry - mark) * qty;
     const roiPct = (pnl, usedMargin) => (pnl / usedMargin) * 100;
     const maintenance = (mmr, mark, qty) => mmr * mark * qty;
-    const marginBalanceCalc = (effectiveMargin, uPnL) => effectiveMargin + uPnL;
+    const marginBalanceCalc = (effectiveMargin, uPnL) => effectiveMargin + uPnL; // cross approx
 
+    // Approximate liq formulas consistent with Binance linear USDT-M under cross
     function liqPriceLong(entry, leverage, mmr, marginUsed, effectiveMargin) {
       const Q = (leverage * marginUsed) / entry;
       const denom = Q * (1 - mmr);
@@ -474,7 +488,7 @@
         ? liqPriceLong(entry, leverage, mmr, usedMargin, effMargin)
         : liqPriceShort(entry, leverage, mmr, usedMargin, effMargin);
 
-      const sideIcon = side === 'LONG' ? `<span class="icon-buy">B</span>` : `<span class="icon-sell">S</span>`;
+      const sideIcon = side === 'LONG' ? '<span class="icon-buy">B</span>' : '<span class="icon-sell">S</span>';
 
       const panel = document.createElement('div');
       panel.className = 'trade-panel';
@@ -484,6 +498,7 @@
           <span class="symbol">${sym}</span>
           <span class="tag">PERP</span>
           <span class="tag">Cross ${leverage}×</span>
+          <!-- MAIN tag removed -->
           <span class="exclamations">${meterBars()}</span>
           <i class="fas fa-share-nodes share"></i>
         </div>
@@ -599,7 +614,7 @@
           }
         }
       } catch {}
-      // Last resort spot klines
+      // Last resort
       try {
         const url3 = `https://fapi.binance.com/fapi/v1/klines?symbol=${sym}&interval=1d&startTime=${startMs - 2*24*3600*1000}&limit=2`;
         const res3 = await fetch(url3);
@@ -630,12 +645,8 @@
 
     /* ===== Live init + WS updates ===== */
     const trades = [];
-    let symbols = shuffle(seedSymbols.slice());
+    let symbols = shuffle(allSymbols.slice());
     const tradeCount = 40;
-
-    // NEW: constrain per-trade margin to $50–$300
-    const TRADE_MARGIN_MIN = 50;
-    const TRADE_MARGIN_MAX = 300;
 
     function shuffleFeed(){
       const nodes = Array.from(feedDiv.children);
@@ -656,12 +667,23 @@
       const markMap = Object.create(null);
       arr.forEach(o => { if (o && o.symbol) markMap[o.symbol] = parseFloat(o.markPrice); });
 
-      const plannedSyms = [];
-      for (let i = 0; i < tradeCount; i++) plannedSyms.push(symbols[i % symbols.length]);
-      const entryMap = await loadSixMonthEntryMap(plannedSyms);
+      // Prepare list for entry prices (include primes + some others)
+      const poolForEntry = Array.from(new Set([
+        ...primeSymbols,
+        ...symbols.slice(0, tradeCount * 2)
+      ]));
+      const entryMap = await loadSixMonthEntryMap(poolForEntry);
 
-      for (let i = 0; i < tradeCount; i++) {
-        const sym = symbols[i % symbols.length];
+      // === Margin range constraint: $50–$300 for ALL trades ===
+      const MARGIN_MIN = 50, MARGIN_MAX = 300;
+
+      // Build planned list: all prime coins first (ensuring available), then others
+      const mainList = primeSymbols.filter(s => marketMeta[s] && isFinite(markMap[s]) && isFinite(entryMap[s]));
+      const otherList = symbols.filter(s => !primeSymbols.includes(s) && marketMeta[s] && isFinite(markMap[s]) && isFinite(entryMap[s]));
+      const planned = [...mainList, ...otherList].slice(0, tradeCount);
+
+      for (let i = 0; i < planned.length; i++) {
+        const sym = planned[i];
         const liveMark = markMap[sym];
         if (!isFinite(liveMark)) continue;
 
@@ -672,16 +694,15 @@
         const entry = quantizeToTick(sixMEntryRaw, getMeta(sym).tickSize);
         const side = (liveMark >= entry) ? 'LONG' : 'SHORT';
 
-        // ***** Margin range $50–$300 *****
-        const usedMargin = Math.round((TRADE_MARGIN_MIN + Math.random()*(TRADE_MARGIN_MAX - TRADE_MARGIN_MIN)) * 100) / 100;
-
+        const usedMargin = MARGIN_MIN + Math.random() * (MARGIN_MAX - MARGIN_MIN); // $50–$300
         const m = getMeta(sym);
+
         let qtyRaw = qtyFrom(usedMargin, leverage, entry);
         let qty = quantizeDownToStep(qtyRaw, m.stepSize);
         if (qty < m.minQty) qty = m.minQty;
 
         const notionalUSDT = entry * qty;
-        const effMargin = usedMargin * (1.5 + Math.random() * 2.5);
+        const effMargin = usedMargin * (1.5 + Math.random() * 2.5); // cross effective margin buffer
         const mmr = getMaintRate(sym);
 
         const panelState = createPanel({
@@ -775,9 +796,5 @@
     unrealEl.textContent = "Loading…";
     realizedSpan.textContent = "Loading…";
   </script>
-</body>
-</html>
-<!-- partial -->
-  
 </body>
 </html>

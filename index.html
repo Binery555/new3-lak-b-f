@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Futures Assets Mockup — with 6M Trend Profit Cards (Main Coins Added, MAIN icon removed)</title>
+  <title>Futures Assets Mockup — with 6M Trend Profit Cards (Top bars fixed)</title>
 
   <!-- Fonts & Icons -->
   <link href="https://db.onlinewebfonts.com/c/d05c19ccecf7003d248c60ffd6b5e8f7?family=Binance+PLEX" rel="stylesheet"/>
@@ -31,27 +31,36 @@
       --seg-font: 12px;
 
       /* widen profit cards evenly from both sides */
-      --card-wide: 8px; /* increase/decrease to control extra width per side */
+      --card-wide: 8px;
     }
 
     *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%}
     body{
       background:var(--bg-base);
       display:flex;justify-content:center;align-items:flex-start;
-      min-height:100dvh;color:#E1E3E8
+      padding:20px;min-height:100vh;color:#E1E3E8
     }
     .app{
       width:var(--app-w);max-width:100%;
       background:var(--bg-base);color:#E1E3E8;
-      border:1px solid #333;border-radius:16px;overflow:hidden;position:relative;
-      padding:12px 16px 80px; /* bottom padding to avoid bottom-nav overlap */
-      font-family:"Segoe UI",Roboto,sans-serif;
-
-      /* make inner content grow + allow inner scroll area */
-      display:flex;flex-direction:column;height:100dvh;overflow:hidden;
+      border:1px solid #333;border-radius:16px;overflow:visible;position:relative;
+      padding:12px 16px 80px;font-family:"Segoe UI",Roboto,sans-serif
     }
     .amount,.value,.rate{font-family:"Binance PLEX",sans-serif!important}
     button{cursor:pointer;border:none;background:transparent;font:inherit;color:inherit}
+
+    /* ====== TOP BAR STACK (fixed / non-scrolling) ====== */
+    .top-stack{
+      position:sticky; /* stays at the very top */
+      top:0;
+      z-index:30;
+      background:var(--bg-base);
+      /* REMOVED bottom line under USDⓢ-M / COIN-M */
+      border-bottom:none !important;
+      padding-bottom:8px;
+      margin-bottom:8px;
+    }
 
     /* ===== Exchange / Wallet segmented control (small) ===== */
     .top-toggle{
@@ -65,7 +74,6 @@
       display:grid;
       grid-template-columns:1fr 1fr;
       gap:var(--seg-gap);
-      flex: 0 0 auto;
     }
     .top-toggle .seg-thumb{
       position:absolute;
@@ -96,24 +104,25 @@
     }
     .top-toggle .toggle-btn.active{ color:#fff; }
 
-    /* ===== Upper navs (fixed part above scroll) ===== */
-    .main-nav{display:flex;justify-content:flex-start;gap:10px;margin:2px 0 6px 0;flex:0 0 auto}
+    /* ===== Upper navs (also inside the fixed stack) ===== */
+    .main-nav{display:flex;justify-content:flex-start;gap:10px;margin:2px 0 6px 0}
     .main-nav button{padding:8px 6px;font-size:13px;color:#A1A6B0}
     .main-nav button.active{color:#FFF;border-bottom:2px solid #FFF}
 
-    /* ===== Scrollable area starts from USDⓢ-M / COIN-M ===== */
-    .scroll-area{
-      flex:1 1 auto;
-      overflow-y:auto;
-      -webkit-overflow-scrolling:touch;
-      padding-bottom:12px;
+    .sub-toggle{
+      display:flex;gap:6px;margin:8px 0 0 0;
+      /* Force no underline/lines under USDⓢ-M / COIN-M row */
+      border-bottom:none !important;
+      box-shadow:none !important;
     }
-    .scroll-area::-webkit-scrollbar{ width:0; height:0 }
-
-    .sub-toggle{display:flex;gap:6px;margin:8px 0}
-    .sub-toggle .toggle-btn{padding:4px 8px;font-size:11px;color:#A1A6B0;border-radius:6px;background:transparent}
+    .sub-toggle .toggle-btn{
+      padding:4px 8px;font-size:11px;color:#A1A6B0;border-radius:6px;background:transparent;
+      border-bottom:none !important;
+    }
+    .sub-toggle .toggle-btn::after{ display:none !important; }
     .sub-toggle .toggle-btn.active{background:#323742;color:#FFF}
 
+    /* ===== Other panels ===== */
     .balance-panel{margin:12px 0}
     .balance-header{display:flex;justify-content:space-between;align-items:center;color:#A1A6B0;font-size:12px}
     .balance-header span{display:flex;align-items:center;gap:6px}
@@ -134,7 +143,15 @@
     .btn{flex:1;padding:8px 0;font-size:13px;margin:0 4px;border-radius:6px;background:#323742;color:#A1A6B0}
     .btn.primary,.btn.active{background:#F3BA2F;color:#1E2128}
 
-    .sub-nav-2{display:flex;align-items:flex-end;gap:16px;margin:0 0 8px 0}
+    /* ===== Positions/Assets bar sticks BELOW the fixed top stack ===== */
+    .sub-nav-2{
+      position:sticky;
+      top:12px; /* will be overwritten by JS to sit under .top-stack */
+      z-index:20;
+      display:flex;align-items:flex-end;gap:16px;margin:0 0 8px 0;
+      background:linear-gradient(var(--bg-base), var(--bg-base));
+      padding-top:6px;
+    }
     .sub-nav-2 button{position:relative;padding:0 6px 8px;font-size:14px;font-weight:700;letter-spacing:.1px;color:var(--text-secondary);line-height:1;font-family:"Binance PLEX","Segoe UI",Roboto,sans-serif}
     .sub-nav-2 button.active{color:#fff}
     .sub-nav-2 button.active::after{
@@ -142,25 +159,34 @@
       width:26px;height:3px;background:var(--highlight);border-radius:2px
     }
 
-    .feed{display:flex;flex-direction:column;gap:8px;width:100%}
+    /* ===== PROFITS LIST: only this part scrolls ===== */
+    .feed{
+      overflow-y:auto;
+      overscroll-behavior-y: contain;
+      padding:12px 0 20px;
+      background:var(--bg-base);
+      scrollbar-width:none;
+      border-top:1px solid #2b2f36;
+    }
+    .feed::-webkit-scrollbar{display:none}
+
     .empty-state{margin:0 0;background:var(--panel-bg);border-radius:10px;padding:20px;text-align:center;border:1px solid #2b2f36}
     .empty-state i{font-size:28px;opacity:.9;margin-bottom:10px;display:inline-block}
     .empty-state h4{font-size:14px;margin-bottom:6px}
     .empty-state p{font-size:12px;color:#A1A6B0;margin-bottom:12px}
     .empty-state .cta{background:#F3BA2F;color:#1E2128;font-size:12px;padding:8px 12px;border-radius:6px;display:inline-flex;align-items:center;gap:6px}
 
-    /* ====== PROFITS CARD (6M Trend Trades design) ====== */
+    /* ====== PROFITS CARD ====== */
     .trade-panel {
       background: var(--panel-bg);
       padding: 12px;
       border-radius: 8px;
       border: none;
       box-shadow: none;
-
-      /* make card wider from both sides (evenly) */
       margin-left: calc(-1 * var(--card-wide));
       margin-right: calc(-1 * var(--card-wide));
     }
+    .trade-panel + .trade-panel{margin-top:8px}
     .trade-panel .header { display: flex; align-items: center; margin-bottom: 8px; }
     .icon-buy, .icon-sell {
       color: #fff; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
@@ -170,7 +196,6 @@
     .icon-sell { background: var(--text-red); }
     .symbol { font-size: 14px; font-weight: 600; margin-right: 6px; color:#fff; }
     .tag { background: var(--secondary-bg); color: var(--text-secondary); font-size: 10px; padding: 1px 4px; margin-right: 4px; text-transform: uppercase; border-radius: 3px; }
-    /* MAIN tag styling removed */
     .exclamations { display: flex; margin-left: 6px; }
     .exclamations span { position: relative; width: 2px; height: 10px; background: var(--secondary-bg); margin: 0 1px; border-radius: 1px; transition: background 0.3s ease; }
     .exclamations span::after { content: ''; position: absolute; bottom: -3px; left: 50%; transform: translateX(-50%); width: 2px; height: 2px; background: inherit; border-radius: 50%; }
@@ -192,7 +217,11 @@
     .tp-btn{flex:1;background:var(--btn-bg);color:#fff;border:none;border-radius:6px;padding:6px 0;font-size:12px;cursor:pointer;transition:background .3s}
     .tp-btn:hover{background:var(--secondary-bg)}
 
-    .bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:var(--app-w);background:#2A2F3A;display:flex;padding:8px 0;z-index:5}
+    .bottom-nav{
+      position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+      width:var(--app-w);background:#2A2F3A;display:flex;padding:8px 0;
+      border-top:1px solid #3a3f49; z-index:40;
+    }
     .bottom-nav button{flex:1;display:flex;flex-direction:column;align-items:center;font-size:10px;color:#A1A6B0}
     .bottom-nav button.active{color:#FFF}
     .bottom-nav i{margin-bottom:4px;font-size:16px}
@@ -200,86 +229,88 @@
 </head>
 <body>
   <div class="app">
-    <!-- Segmented control (fixed) -->
-    <header class="top-toggle" aria-label="Exchange or Wallet">
-      <span class="seg-thumb" aria-hidden="true"></span>
-      <button class="toggle-btn active" type="button">Exchange</button>
-      <button class="toggle-btn" type="button">Wallet</button>
-    </header>
+    <!-- ===== UPPER (NON-SCROLLING) AREA ===== -->
+    <div class="top-stack" id="topStack">
+      <!-- Segmented control -->
+      <header class="top-toggle" aria-label="Exchange or Wallet">
+        <span class="seg-thumb" aria-hidden="true"></span>
+        <button class="toggle-btn active" type="button">Exchange</button>
+        <button class="toggle-btn" type="button">Wallet</button>
+      </header>
 
-    <!-- Main nav (fixed) -->
-    <nav class="main-nav" aria-label="Main sections">
-      <button>Overview</button>
-      <button class="active">Futures</button>
-      <button>Spot</button>
-      <button>Funding</button>
-    </nav>
+      <nav class="main-nav" aria-label="Main sections">
+        <button>Overview</button>
+        <button class="active">Futures</button>
+        <button>Spot</button>
+        <button>Funding</button>
+      </nav>
 
-    <!-- ===== SCROLLABLE CONTENT starts here ===== -->
-    <div class="scroll-area" id="scrollArea">
       <div class="sub-toggle" role="tablist" aria-label="Futures type">
         <button class="toggle-btn active" role="tab" aria-selected="true">USDⓢ-M</button>
         <button class="toggle-btn" role="tab" aria-selected="false">COIN-M</button>
       </div>
-
-      <!-- ===== Top Balances ===== -->
-      <section class="balance-panel" aria-label="Balances">
-        <div class="balance-header">
-          <span>Margin Balance <i id="eyeToggle" class="fas fa-eye" aria-hidden="true"></i></span>
-          <span class="icon-group" aria-label="Actions">
-            <i class="fas fa-gift" title="Rewards"></i>
-            <i class="fas fa-right-left" title="Convert"></i>
-            <i class="fas fa-file-invoice" title="Statements"></i>
-          </span>
-        </div>
-
-        <div class="balance-amount">
-          <span id="amount" class="amount">Loading…</span>
-          <span class="currency">USD <i class="fas fa-chevron-down" aria-hidden="true"></i></span>
-        </div>
-
-        <div class="realized-pnl" id="pnl">
-          Today’s Realized PNL
-          <span id="realizedSpan" class="gain">Loading…</span>
-          <i class="fas fa-chevron-right" aria-hidden="true"></i>
-        </div>
-
-        <div class="small-balances">
-          <div class="small-item">
-            <div class="label">Wallet Balance (USD)</div>
-            <div class="value" id="walletValue">Loading…</div>
-          </div>
-          <div class="small-item">
-            <div class="label">Unrealized PNL (USD)</div>
-            <div class="value" id="unrealizedValue">Loading…</div>
-          </div>
-        </div>
-      </section>
-
-      <section class="actions" aria-label="Quick actions">
-        <button class="btn primary active">Trade</button>
-        <button class="btn">Swap</button>
-        <button class="btn">Transfer</button>
-      </section>
-
-      <section class="positions" aria-label="Positions">
-        <nav class="sub-nav-2">
-          <button class="active">Positions</button>
-          <button>Assets</button>
-        </nav>
-        <div class="feed" id="feed">
-          <div class="empty-state" id="emptyState">
-            <i class="fa-solid fa-briefcase"></i>
-            <h4>You have no open positions</h4>
-            <p>Start a trade to see it listed here in real-time.</p>
-            <button class="cta"><i class="fa-solid fa-plus"></i> Open a Trade</button>
-          </div>
-        </div>
-      </section>
     </div>
-    <!-- ===== /SCROLLABLE CONTENT ===== -->
+    <!-- ===== /UPPER (fixed) ===== -->
 
-    <nav class="bottom-nav" aria-label="Bottom navigation">
+    <!-- ===== Below can scroll as needed ===== -->
+    <section class="balance-panel" aria-label="Balances">
+      <div class="balance-header">
+        <span>Margin Balance <i id="eyeToggle" class="fas fa-eye" aria-hidden="true"></i></span>
+        <span class="icon-group" aria-label="Actions">
+          <i class="fas fa-gift" title="Rewards"></i>
+          <i class="fas fa-right-left" title="Convert"></i>
+          <i class="fas fa-file-invoice" title="Statements"></i>
+        </span>
+      </div>
+
+      <div class="balance-amount">
+        <span id="amount" class="amount">Loading…</span>
+        <span class="currency">USD <i class="fas fa-chevron-down" aria-hidden="true"></i></span>
+      </div>
+
+      <div class="realized-pnl" id="pnl">
+        Today’s Realized PNL
+        <span id="realizedSpan" class="gain">Loading…</span>
+        <i class="fas fa-chevron-right" aria-hidden="true"></i>
+      </div>
+
+      <div class="small-balances">
+        <div class="small-item">
+          <div class="label">Wallet Balance (USD)</div>
+          <div class="value" id="walletValue">Loading…</div>
+        </div>
+        <div class="small-item">
+          <div class="label">Unrealized PNL (USD)</div>
+          <div class="value" id="unrealizedValue">Loading…</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="actions" aria-label="Quick actions">
+      <button class="btn primary active">Trade</button>
+      <button class="btn">Swap</button>
+      <button class="btn">Transfer</button>
+    </section>
+
+    <section class="positions" aria-label="Positions">
+      <!-- Sticks right under the fixed top stack -->
+      <nav class="sub-nav-2" id="stickyBar">
+        <button class="active">Positions</button>
+        <button>Assets</button>
+      </nav>
+
+      <!-- From here downward: only profits cards scroll -->
+      <div class="feed" id="feed">
+        <div class="empty-state" id="emptyState">
+          <i class="fa-solid fa-briefcase"></i>
+          <h4>You have no open positions</h4>
+          <p>Start a trade to see it listed here in real-time.</p>
+          <button class="cta"><i class="fa-solid fa-plus"></i> Open a Trade</button>
+        </div>
+      </div>
+    </section>
+
+    <nav class="bottom-nav" aria-label="Bottom navigation" id="bottomNav">
       <button><i class="fas fa-home"></i><span>Home</span></button>
       <button><i class="fas fa-chart-bar"></i><span>Markets</span></button>
       <button><i class="fas fa-exchange-alt"></i><span>Trade</span></button>
@@ -301,6 +332,29 @@
       setActive(0);
       btns.forEach((b,i)=> b.addEventListener('click',()=>setActive(i)));
     })();
+
+    /* ===== Layout: keep top bars fixed; set profits list height ===== */
+    function sizeFeed(){
+      const feed = document.getElementById('feed');
+      const stickyBar = document.getElementById('stickyBar');
+      const bottomNav = document.getElementById('bottomNav');
+      const topStack  = document.getElementById('topStack');
+      if(!feed || !stickyBar || !bottomNav || !topStack) return;
+
+      // Place the Positions/Assets sticky bar just under the fixed topStack
+      const topOffset = Math.ceil(topStack.getBoundingClientRect().height + 8); // +gap
+      stickyBar.style.top = topOffset + 'px';
+
+      const barH = stickyBar.getBoundingClientRect().height || 40;
+      const bottomH = bottomNav.getBoundingClientRect().height || 56;
+
+      // Fill the space below sticky bar down to above the bottom nav
+      const available = window.innerHeight - (topOffset + barH) - bottomH - 12;
+      feed.style.height = Math.max(120, available) + 'px';
+      feed.style.maxHeight = feed.style.height;
+    }
+    window.addEventListener('resize', sizeFeed);
+    document.addEventListener('DOMContentLoaded', sizeFeed);
 
     /* ===== Top panel utils ===== */
     const fmtMoney = (n) =>
@@ -348,7 +402,7 @@
     const dpFromTick = (tickStr) => {
       const idx = (tickStr || '').indexOf('.');
       if (idx === -1) return 0;
-      return (tickStr.length - idx - 1);
+      return tickStr.length - idx - 1;
     };
     const quantizeToTick = (price, tickSize) => {
       const step = parseFloat(tickSize);
@@ -424,13 +478,13 @@
       return joinIntDec(i, d);
     }
 
-    /* ===== MAIN (PRIME) COINS for profit focus ===== */
+    /* ===== MAIN (PRIME) COINS ===== */
     const primeSymbols = [
       'BTCUSDT','ETHUSDT','BNBUSDT','SOLUSDT','XRPUSDT','DOGEUSDT','TONUSDT','ADAUSDT','AVAXUSDT','TRXUSDT',
       'LINKUSDT','DOTUSDT','NEARUSDT','OPUSDT','ARBUSDT','APTUSDT','INJUSDT','RNDRUSDT','SEIUSDT','TIAUSDT','ONDOUSDT'
     ];
 
-    /* ===== Symbols pool (FTMUSDT REMOVED) + rates ===== */
+    /* ===== Symbols pool ===== */
     const seedSymbols = [
       'BTCUSDT','ETHUSDT','BNBUSDT','ADAUSDT','SOLUSDT','XRPUSDT','DOTUSDT','LTCUSDT',
       'LINKUSDT','DOGEUSDT','AAVEUSDT','SUSHIUSDT','SHIBUSDT','COMPUSDT','ETCUSDT','ZECUSDT',
@@ -441,7 +495,6 @@
       'FLOKIUSDT','WIFUSDT','ARKUSDT','IOTAUSDT','KASUSDT','PYTHUSDT','STRKUSDT','JUPUSDT',
       'APEUSDT','BLURUSDT','SEIUSDT','TIAUSDT','TONUSDT','ONDOUSDT'
     ];
-    // merged unique list (ensures primes are included)
     const allSymbols = Array.from(new Set([...primeSymbols, ...seedSymbols]));
 
     const maintenanceMarginRates = {
@@ -464,9 +517,9 @@
     const upnlShort = (mark, entry, qty) => (entry - mark) * qty;
     const roiPct = (pnl, usedMargin) => (pnl / usedMargin) * 100;
     const maintenance = (mmr, mark, qty) => mmr * mark * qty;
-    const marginBalanceCalc = (effectiveMargin, uPnL) => effectiveMargin + uPnL; // cross approx
+    const marginBalanceCalc = (effectiveMargin, uPnL) => effectiveMargin + uPnL;
 
-    // Approximate liq formulas consistent with Binance linear USDT-M under cross
+    // Cross liquidation approximation (excludes fees/ADL buffers)
     function liqPriceLong(entry, leverage, mmr, marginUsed, effectiveMargin) {
       const Q = (leverage * marginUsed) / entry;
       const denom = Q * (1 - mmr);
@@ -491,7 +544,9 @@
     const feedDiv = document.getElementById('feed');
     function meterBars () {
       const totalBars = 4; const greenBars = Math.floor(Math.random() * totalBars) + 1;
-      return Array.from({length: totalBars}, (_,j)=>`<span class="${j < greenBars ? 'green' : ''}"></span>`).join('');
+      let html = '';
+      for (let j = 0; j < totalBars; j++) html += `<span class="${j < greenBars ? 'green' : ''}"></span>`;
+      return html;
     }
 
     function createPanel({ sym, leverage, entry, mark, usedMargin, effMargin, mmr, qty, notionalUSDT, side }) {
@@ -514,7 +569,6 @@
           <span class="symbol">${sym}</span>
           <span class="tag">PERP</span>
           <span class="tag">Cross ${leverage}×</span>
-          <!-- MAIN tag removed -->
           <span class="exclamations">${meterBars()}</span>
           <i class="fas fa-share-nodes share"></i>
         </div>
@@ -606,7 +660,6 @@
       return d.getTime();
     }
     async function fetchSixMonthMarkClose(sym, startMs) {
-      // markPriceKlines first
       try {
         const url1 = `https://fapi.binance.com/fapi/v1/markPriceKlines?symbol=${sym}&interval=1d&startTime=${startMs - 2*24*3600*1000}&limit=2`;
         const res1 = await fetch(url1);
@@ -618,7 +671,6 @@
           }
         }
       } catch {}
-      // Fallback continuous PERPETUAL
       try {
         const url2 = `https://fapi.binance.com/fapi/v1/continuousKlines?pair=${sym}&contractType=PERPETUAL&interval=1d&startTime=${startMs - 2*24*3600*1000}&limit=2`;
         const res2 = await fetch(url2);
@@ -630,7 +682,6 @@
           }
         }
       } catch {}
-      // Last resort
       try {
         const url3 = `https://fapi.binance.com/fapi/v1/klines?symbol=${sym}&interval=1d&startTime=${startMs - 2*24*3600*1000}&limit=2`;
         const res3 = await fetch(url3);
@@ -666,34 +717,30 @@
 
     function shuffleFeed(){
       const nodes = Array.from(feedDiv.children);
-      shuffle(nodes).forEach(n => feedDiv.appendChild(n));
+      nodes.filter(n=>n.id!=='emptyState').forEach(n=>feedDiv.appendChild(n));
     }
 
     async function seedWithFuturesMark6M() {
-      // Remove empty state
       const empty = document.getElementById("emptyState");
       if (empty) empty.remove();
 
       await loadExchangeMeta();
       symbols = symbols.filter(s => !!marketMeta[s]);
 
-      // live marks snapshot
       const res = await fetch('https://fapi.binance.com/fapi/v1/premiumIndex');
       const arr = await res.json();
       const markMap = Object.create(null);
       arr.forEach(o => { if (o && o.symbol) markMap[o.symbol] = parseFloat(o.markPrice); });
 
-      // Prepare list for entry prices (include primes + some others)
       const poolForEntry = Array.from(new Set([
         ...primeSymbols,
         ...symbols.slice(0, tradeCount * 2)
       ]));
       const entryMap = await loadSixMonthEntryMap(poolForEntry);
 
-      // === Margin range constraint: $50–$300 for ALL trades ===
+      // ===== Margin used per-position (USDT) range as requested =====
       const MARGIN_MIN = 50, MARGIN_MAX = 300;
 
-      // Build planned list: all prime coins first (ensuring available), then others
       const mainList = primeSymbols.filter(s => marketMeta[s] && isFinite(markMap[s]) && isFinite(entryMap[s]));
       const otherList = symbols.filter(s => !primeSymbols.includes(s) && marketMeta[s] && isFinite(markMap[s]) && isFinite(entryMap[s]));
       const planned = [...mainList, ...otherList].slice(0, tradeCount);
@@ -710,7 +757,7 @@
         const entry = quantizeToTick(sixMEntryRaw, getMeta(sym).tickSize);
         const side = (liveMark >= entry) ? 'LONG' : 'SHORT';
 
-        const usedMargin = MARGIN_MIN + Math.random() * (MARGIN_MAX - MARGIN_MIN); // $50–$300
+        const usedMargin = MARGIN_MIN + Math.random() * (MARGIN_MAX - MARGIN_MIN);
         const m = getMeta(sym);
 
         let qtyRaw = qtyFrom(usedMargin, leverage, entry);
@@ -718,7 +765,10 @@
         if (qty < m.minQty) qty = m.minQty;
 
         const notionalUSDT = entry * qty;
-        const effMargin = usedMargin * (1.5 + Math.random() * 2.5); // cross effective margin buffer
+
+        // Effective margin (wallet balance allocated for cross)
+        const effMargin = usedMargin * (1.5 + Math.random() * 2.5);
+
         const mmr = getMaintRate(sym);
 
         const panelState = createPanel({
@@ -728,12 +778,11 @@
         trades.push(panelState);
         feedDiv.appendChild(panelState.node);
       }
-      // Shuffle DOM order once all cards appended
       shuffleFeed();
+      sizeFeed(); // ensure height correct after cards render
     }
 
     function recalcAccountTop(){
-      // Sum UPNL across all trades
       let sum = 0;
       for (const t of trades) {
         sum += (t.side === 'LONG') ? upnlLong(t.mark, t.entry, t.qty)
@@ -764,8 +813,8 @@
 
           for (const t of trades) {
             if (t.sym === sym) {
-              t.mark = mp;               // live mark at Binance speed
-              renderTrade(t);            // redraw card
+              t.mark = mp;
+              renderTrade(t);
               touched = true;
             }
           }
@@ -784,15 +833,17 @@
     }
 
     (async function init(){
-      // Pick Margin Balance target (random in 350k–500k) & realized PNL rule (0.5%–2.0%)
+      sizeFeed(); // compute feed height before data
+
+      const BAL_MIN = 350000, BAL_MAX = 500000;
+      const REALIZED_MIN_PCT = 0.50, REALIZED_MAX_PCT = 2.00;
+
       marginBalanceTarget = Math.round(((BAL_MIN + Math.random()*(BAL_MAX - BAL_MIN)) + Number.EPSILON) * 100) / 100;
       realizedTodayPct = REALIZED_MIN_PCT + Math.random()*(REALIZED_MAX_PCT - REALIZED_MIN_PCT);
       realizedTodayUSD = marginBalanceTarget * (realizedTodayPct/100);
 
-      // Seed profit cards + meta
       await seedWithFuturesMark6M();
 
-      // Compute initial unrealized, then set wallet to hit target margin balance (wallet locked after)
       let initialUnreal = 0;
       for (const t of trades) {
         initialUnreal += (t.side === 'LONG') ? upnlLong(t.mark, t.entry, t.qty)
@@ -802,7 +853,6 @@
       walletBalance = marginBalanceTarget - unrealizedSum; // lock wallet
       refreshTop();
 
-      // Live updates
       connectFuturesMarkWS();
     })();
 

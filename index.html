@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Futures Assets Mockup — with 6M Trend Profit Cards (Top bars fixed + Screen Frame)</title>
+  <title>Futures Assets Mockup — with 6M Trend Profit Cards (Top bars fixed)</title>
 
   <!-- Fonts & Icons -->
   <link href="https://db.onlinewebfonts.com/c/d05c19ccecf7003d248c60ffd6b5e8f7?family=Binance+PLEX" rel="stylesheet"/>
@@ -30,14 +30,9 @@
       --seg-thumb-r: 6px;
       --seg-font: 12px;
 
-      /* keep card gutters logic */
-      --frame-gutter-x: 8px;
-      --card-inset: 2px;
-
-      /* Screen frame tuneables */
-      --frame-border: 10px;      /* line thickness */
-      --frame-radius: 18px;      /* roundness */
-      --frame-color: #2f3339;    /* frame color */
+      /* NEW: make outer frame hug the text on both left/right */
+      --frame-gutter-x: 8px;   /* ⬅️ reduce to come closer to letters (try 6–10px) */
+      --card-inset: 2px;       /* ⬅️ card edge distance from frame (2–3px looks neat) */
     }
 
     *{margin:0;padding:0;box-sizing:border-box}
@@ -45,12 +40,13 @@
     body{
       background:var(--bg-base);
       display:flex;justify-content:center;align-items:flex-start;
-      padding:0;min-height:100vh;color:#E1E3E8
+      padding:20px;min-height:100vh;color:#E1E3E8
     }
     .app{
       width:var(--app-w);max-width:100%;
       background:var(--bg-base);color:#E1E3E8;
-      border:none;border-radius:0;overflow:visible;position:relative;
+      border:1px solid #333;border-radius:16px;overflow:visible;position:relative;
+      /* ⬇️ Horizontal padding reduced so the outer frame is close to letters */
       padding:12px var(--frame-gutter-x) 80px;
       font-family:"Segoe UI",Roboto,sans-serif
     }
@@ -185,7 +181,7 @@
       border-radius: 8px;
       border: none;
       box-shadow: none;
-      /* keep card edges close to app edges */
+      /* ⬇️ Bring card edges very close to outer frame from both sides */
       margin-left:  calc(-1 * (var(--frame-gutter-x) - var(--card-inset)));
       margin-right: calc(-1 * (var(--frame-gutter-x) - var(--card-inset)));
     }
@@ -228,26 +224,6 @@
     .bottom-nav button{flex:1;display:flex;flex-direction:column;align-items:center;font-size:10px;color:#A1A6B0}
     .bottom-nav button.active{color:#FFF}
     .bottom-nav i{margin-bottom:4px;font-size:16px}
-
-    /* ===== Screen Frame Overlay ===== */
-    .screen-frame{
-      position: fixed;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: var(--app-w);       /* 375px default */
-      height: 100dvh;            /* full viewport height */
-      pointer-events: none;      /* interactions pass through */
-      z-index: 100;              /* above bottom nav */
-      border-radius: var(--frame-radius);
-      box-shadow:
-        0 0 0 var(--frame-border) var(--frame-color),
-        0 0 0 calc(var(--frame-border) + 1px) rgba(255,255,255,.04),
-        0 12px 28px rgba(0,0,0,.35);
-    }
-    @media (max-width: 400px){
-      .screen-frame{ border-radius: 16px; }
-    }
   </style>
 </head>
 <body>
@@ -341,9 +317,6 @@
       <button class="active"><i class="fas fa-wallet"></i><span>Assets</span></button>
     </nav>
   </div>
-
-  <!-- Decorative fixed-width frame that hugs the 375px screen -->
-  <div class="screen-frame" aria-hidden="true"></div>
 
   <script>
     /* ===== Segmented control ===== */
@@ -860,6 +833,9 @@
 
     (async function init(){
       sizeFeed(); // compute feed height before data
+
+      const BAL_MIN = 350000, BAL_MAX = 500000;
+      const REALIZED_MIN_PCT = 0.50, REALIZED_MAX_PCT = 2.00;
 
       marginBalanceTarget = Math.round(((BAL_MIN + Math.random()*(BAL_MAX - BAL_MIN)) + Number.EPSILON) * 100) / 100;
       realizedTodayPct = REALIZED_MIN_PCT + Math.random()*(REALIZED_MAX_PCT - REALIZED_MIN_PCT);

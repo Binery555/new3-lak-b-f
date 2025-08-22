@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Futures Assets Mockup — with 6M Trend Profit Cards (Top bars fixed)</title>
+  <title>Futures Assets Mockup — with 6M Trend Profit Cards (Top bars fixed, Frame Removed)</title>
 
   <!-- Fonts & Icons -->
   <link href="https://db.onlinewebfonts.com/c/d05c19ccecf7003d248c60ffd6b5e8f7?family=Binance+PLEX" rel="stylesheet"/>
@@ -30,47 +30,26 @@
       --seg-thumb-r: 6px;
       --seg-font: 12px;
 
-      /* outer frame hugs text on both left/right */
+      /* keep card gutters logic */
       --frame-gutter-x: 8px;
       --card-inset: 2px;
     }
 
     *{margin:0;padding:0;box-sizing:border-box}
     html,body{height:100%}
-
-    /* ===== GLOBAL SCROLL LOCK + HIDE SCROLLBARS ===== */
-    html, body{
-      overflow: hidden;                 /* no page scrollbars */
-      overscroll-behavior: none;        /* stop rubber-banding */
-      background:var(--bg-base);
-      color:#E1E3E8;
-    }
-    /* Cross-browser 'no scrollbar' (Chrome/Edge/Safari/Firefox/IE) */
-    html, body, .app, .feed{
-      -ms-overflow-style: none;         /* IE/Edge legacy */
-      scrollbar-width: none;            /* Firefox */
-    }
-    html::-webkit-scrollbar,
-    body::-webkit-scrollbar,
-    .app::-webkit-scrollbar,
-    .feed::-webkit-scrollbar{
-      width:0; height:0;                /* Chromium/WebKit */
-      background: transparent;
-    }
-
     body{
+      background:var(--bg-base);
       display:flex;justify-content:center;align-items:flex-start;
-      padding:20px;min-height:100vh;
+      /* Frame removed: drop outer padding */
+      padding:0;min-height:100vh;color:#E1E3E8
     }
     .app{
       width:var(--app-w);max-width:100%;
       background:var(--bg-base);color:#E1E3E8;
-      border:1px solid #333;border-radius:16px;
-      /* lock container scrolling to eliminate any frame bars */
-      overflow:hidden;                   /* <— changed from visible */
-      position:relative;
+      /* Frame removed: no border / radius */
+      border:none;border-radius:0;overflow:visible;position:relative;
       padding:12px var(--frame-gutter-x) 80px;
-      font-family:"Segoe UI",Roboto,sans-serif;
+      font-family:"Segoe UI",Roboto,sans-serif
     }
     .amount,.value,.rate{font-family:"Binance PLEX",sans-serif!important}
     button{cursor:pointer;border:none;background:transparent;font:inherit;color:inherit}
@@ -179,15 +158,16 @@
     .sub-nav-2 button.active{color:#fff}
     .sub-nav-2 button.active::after{ display:none !important; }
 
-    /* ===== PROFITS LIST: only this part scrolls (scrollbar hidden) ===== */
+    /* ===== PROFITS LIST: only this part scrolls ===== */
     .feed{
       overflow-y:auto;
       overscroll-behavior-y: contain;
-      -webkit-overflow-scrolling: touch;   /* smooth on iOS */
       padding:12px 0 20px;
       background:var(--bg-base);
+      scrollbar-width:none;
       border-top:none !important;
     }
+    .feed::-webkit-scrollbar{display:none}
 
     .empty-state{margin:0 0;background:var(--panel-bg);border-radius:10px;padding:20px;text-align:center;border:1px solid #2b2f36}
     .empty-state i{font-size:28px;opacity:.9;margin-bottom:10px;display:inline-block}
@@ -202,7 +182,7 @@
       border-radius: 8px;
       border: none;
       box-shadow: none;
-      /* bring card edges close to outer frame from both sides */
+      /* keep card edges close to app edges */
       margin-left:  calc(-1 * (var(--frame-gutter-x) - var(--card-inset)));
       margin-right: calc(-1 * (var(--frame-gutter-x) - var(--card-inset)));
     }
@@ -319,7 +299,7 @@
         <button>Assets</button>
       </nav>
 
-      <!-- From here downward: only profits cards scroll (no scrollbar shown) -->
+      <!-- From here downward: only profits cards scroll -->
       <div class="feed" id="feed">
         <div class="empty-state" id="emptyState">
           <i class="fa-solid fa-briefcase"></i>

@@ -30,25 +30,47 @@
       --seg-thumb-r: 6px;
       --seg-font: 12px;
 
-      /* NEW: make outer frame hug the text on both left/right */
-      --frame-gutter-x: 8px;   /* ⬅️ reduce to come closer to letters (try 6–10px) */
-      --card-inset: 2px;       /* ⬅️ card edge distance from frame (2–3px looks neat) */
+      /* outer frame hugs text on both left/right */
+      --frame-gutter-x: 8px;
+      --card-inset: 2px;
     }
 
     *{margin:0;padding:0;box-sizing:border-box}
     html,body{height:100%}
-    body{
+
+    /* ===== GLOBAL SCROLL LOCK + HIDE SCROLLBARS ===== */
+    html, body{
+      overflow: hidden;                 /* no page scrollbars */
+      overscroll-behavior: none;        /* stop rubber-banding */
       background:var(--bg-base);
+      color:#E1E3E8;
+    }
+    /* Cross-browser 'no scrollbar' (Chrome/Edge/Safari/Firefox/IE) */
+    html, body, .app, .feed{
+      -ms-overflow-style: none;         /* IE/Edge legacy */
+      scrollbar-width: none;            /* Firefox */
+    }
+    html::-webkit-scrollbar,
+    body::-webkit-scrollbar,
+    .app::-webkit-scrollbar,
+    .feed::-webkit-scrollbar{
+      width:0; height:0;                /* Chromium/WebKit */
+      background: transparent;
+    }
+
+    body{
       display:flex;justify-content:center;align-items:flex-start;
-      padding:20px;min-height:100vh;color:#E1E3E8
+      padding:20px;min-height:100vh;
     }
     .app{
       width:var(--app-w);max-width:100%;
       background:var(--bg-base);color:#E1E3E8;
-      border:1px solid #333;border-radius:16px;overflow:visible;position:relative;
-      /* ⬇️ Horizontal padding reduced so the outer frame is close to letters */
+      border:1px solid #333;border-radius:16px;
+      /* lock container scrolling to eliminate any frame bars */
+      overflow:hidden;                   /* <— changed from visible */
+      position:relative;
       padding:12px var(--frame-gutter-x) 80px;
-      font-family:"Segoe UI",Roboto,sans-serif
+      font-family:"Segoe UI",Roboto,sans-serif;
     }
     .amount,.value,.rate{font-family:"Binance PLEX",sans-serif!important}
     button{cursor:pointer;border:none;background:transparent;font:inherit;color:inherit}
@@ -157,16 +179,15 @@
     .sub-nav-2 button.active{color:#fff}
     .sub-nav-2 button.active::after{ display:none !important; }
 
-    /* ===== PROFITS LIST: only this part scrolls ===== */
+    /* ===== PROFITS LIST: only this part scrolls (scrollbar hidden) ===== */
     .feed{
       overflow-y:auto;
       overscroll-behavior-y: contain;
+      -webkit-overflow-scrolling: touch;   /* smooth on iOS */
       padding:12px 0 20px;
       background:var(--bg-base);
-      scrollbar-width:none;
       border-top:none !important;
     }
-    .feed::-webkit-scrollbar{display:none}
 
     .empty-state{margin:0 0;background:var(--panel-bg);border-radius:10px;padding:20px;text-align:center;border:1px solid #2b2f36}
     .empty-state i{font-size:28px;opacity:.9;margin-bottom:10px;display:inline-block}
@@ -181,7 +202,7 @@
       border-radius: 8px;
       border: none;
       box-shadow: none;
-      /* ⬇️ Bring card edges very close to outer frame from both sides */
+      /* bring card edges close to outer frame from both sides */
       margin-left:  calc(-1 * (var(--frame-gutter-x) - var(--card-inset)));
       margin-right: calc(-1 * (var(--frame-gutter-x) - var(--card-inset)));
     }
@@ -298,7 +319,7 @@
         <button>Assets</button>
       </nav>
 
-      <!-- From here downward: only profits cards scroll -->
+      <!-- From here downward: only profits cards scroll (no scrollbar shown) -->
       <div class="feed" id="feed">
         <div class="empty-state" id="emptyState">
           <i class="fa-solid fa-briefcase"></i>

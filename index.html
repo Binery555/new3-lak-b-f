@@ -30,8 +30,9 @@
       --seg-thumb-r: 6px;
       --seg-font: 12px;
 
-      /* widen profit cards evenly from both sides */
-      --card-wide: 8px;
+      /* NEW: make outer frame hug the text on both left/right */
+      --frame-gutter-x: 8px;   /* ⬅️ reduce to come closer to letters (try 6–10px) */
+      --card-inset: 2px;       /* ⬅️ card edge distance from frame (2–3px looks neat) */
     }
 
     *{margin:0;padding:0;box-sizing:border-box}
@@ -45,7 +46,9 @@
       width:var(--app-w);max-width:100%;
       background:var(--bg-base);color:#E1E3E8;
       border:1px solid #333;border-radius:16px;overflow:visible;position:relative;
-      padding:12px 16px 80px;font-family:"Segoe UI",Roboto,sans-serif
+      /* ⬇️ Horizontal padding reduced so the outer frame is close to letters */
+      padding:12px var(--frame-gutter-x) 80px;
+      font-family:"Segoe UI",Roboto,sans-serif
     }
     .amount,.value,.rate{font-family:"Binance PLEX",sans-serif!important}
     button{cursor:pointer;border:none;background:transparent;font:inherit;color:inherit}
@@ -56,7 +59,6 @@
       top:0;
       z-index:30;
       background:var(--bg-base);
-      /* REMOVED bottom line under USDⓢ-M / COIN-M */
       border-bottom:none !important;
       padding-bottom:8px;
       margin-bottom:8px;
@@ -111,7 +113,6 @@
 
     .sub-toggle{
       display:flex;gap:6px;margin:8px 0 0 0;
-      /* Force no underline/lines under USDⓢ-M / COIN-M row */
       border-bottom:none !important;
       box-shadow:none !important;
     }
@@ -146,7 +147,7 @@
     /* ===== Positions/Assets bar sticks BELOW the fixed top stack ===== */
     .sub-nav-2{
       position:sticky;
-      top:12px; /* will be overwritten by JS to sit under .top-stack */
+      top:12px; /* overwritten by JS to sit under .top-stack */
       z-index:20;
       display:flex;align-items:flex-end;gap:16px;margin:0 0 8px 0;
       background:linear-gradient(var(--bg-base), var(--bg-base));
@@ -154,10 +155,7 @@
     }
     .sub-nav-2 button{position:relative;padding:0 6px 8px;font-size:14px;font-weight:700;letter-spacing:.1px;color:var(--text-secondary);line-height:1;font-family:"Binance PLEX","Segoe UI",Roboto,sans-serif}
     .sub-nav-2 button.active{color:#fff}
-    .sub-nav-2 button.active::after{
-      content:"";position:absolute;bottom:0;left:50%;transform:translateX(-50%);
-      width:26px;height:3px;background:var(--highlight);border-radius:2px
-    }
+    .sub-nav-2 button.active::after{ display:none !important; }
 
     /* ===== PROFITS LIST: only this part scrolls ===== */
     .feed{
@@ -166,7 +164,7 @@
       padding:12px 0 20px;
       background:var(--bg-base);
       scrollbar-width:none;
-      border-top:1px solid #2b2f36;
+      border-top:none !important;
     }
     .feed::-webkit-scrollbar{display:none}
 
@@ -183,8 +181,9 @@
       border-radius: 8px;
       border: none;
       box-shadow: none;
-      margin-left: calc(-1 * var(--card-wide));
-      margin-right: calc(-1 * var(--card-wide));
+      /* ⬇️ Bring card edges very close to outer frame from both sides */
+      margin-left:  calc(-1 * (var(--frame-gutter-x) - var(--card-inset)));
+      margin-right: calc(-1 * (var(--frame-gutter-x) - var(--card-inset)));
     }
     .trade-panel + .trade-panel{margin-top:8px}
     .trade-panel .header { display: flex; align-items: center; margin-bottom: 8px; }
@@ -738,7 +737,7 @@
       ]));
       const entryMap = await loadSixMonthEntryMap(poolForEntry);
 
-      // ===== Margin used per-position (USDT) range as requested =====
+      // Margin used per-position (USDT)
       const MARGIN_MIN = 50, MARGIN_MAX = 300;
 
       const mainList = primeSymbols.filter(s => marketMeta[s] && isFinite(markMap[s]) && isFinite(entryMap[s]));

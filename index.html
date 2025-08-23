@@ -560,7 +560,12 @@
       if (!isFinite(P) || P <= 0) return null;
       return P;
     }
-    const marginRatioPct = (maint, mBal) => (mBal <= 0 ? 100 : (maint / mBal) * 100);
+    const marginRatioPct = (maint, mBal) => {
+      const mb = Number(mBal);
+      if (!isFinite(mb) || mb <= 0) return 100;
+      const r = (maint / mb) * 100;
+      return Math.max(0, Math.min(9999, r));
+    };
 
     /* ===== UI helpers ===== */
     const feedDiv = document.getElementById('feed');
@@ -571,7 +576,8 @@
       return html;
     }
 
-    function createPanel({ sym, leverage, entry, mark, usedMargin, effMargin, mmr, qty, notionalUSDT, side }) {
+    // NOTE: Size (USDT) now reflects Mark × Qty and updates live.
+    function createPanel({ sym, leverage, entry, mark, usedMargin, effMargin, mmr, qty, side }) {
       const pnl = side === 'LONG' ? upnlLong(mark, entry, qty) : upnlShort(mark, entry, qty);
       const roi = roiPct(pnl, usedMargin);
       const maint = maintenance(mmr, mark, qty);
@@ -582,6 +588,7 @@
         : liqPriceShort(entry, leverage, mmr, usedMargin, effMargin);
 
       const sideIcon = side === 'LONG' ? '<span class="icon-buy">B</span>' : '<span class="icon-sell">S</span>';
+      const sizeUSDT = mark * qty; // dynamic — will be refreshed in renderTrade()
 
       const panel = document.createElement('div');
       panel.className = 'trade-panel';
@@ -602,7 +609,7 @@
             </div>
             <div class="stat">
               <div class="label">Size (USDT)</div>
-              <div class="value size">${formatTwoDP(notionalUSDT)}</div>
+              <div class="value size">${formatTwoDP(sizeUSDT)}</div>
             </div>
             <div class="stat">
               <div class="label">Entry Price (USDT)</div>
@@ -658,7 +665,12 @@
       pnlEl.classList.toggle('green', pnl >= 0);
       pnlEl.classList.toggle('red', pnl < 0);
 
+      // Live Mark
       t.node.querySelector('.value.mark').textContent = formatPrice(t.sym, t.mark);
+
+      // Live Size (USDT) = Mark × Qty
+      const sizeEl = t.node.querySelector('.value.size');
+      sizeEl.textContent = formatTwoDP(t.mark * t.qty);
 
       const roiEl = t.node.querySelector('.value.roi');
       roiEl.textContent = (roi >= 0 ? '+' : '') + toFixedSafe(roi, 2) + '%';
@@ -788,8 +800,6 @@
         let qty = quantizeDownToStep(qtyRaw, m.stepSize);
         if (qty < m.minQty) qty = m.minQty;
 
-        const notionalUSDT = entry * qty;
-
         let effMargin = saved?.eff ?? (usedMargin * (1.5 + Math.random() * 2.5));
 
         // Persist margins (and leverage) so the card's Margin stays the same after refresh
@@ -797,7 +807,7 @@
 
         const panelState = createPanel({
           sym, leverage, entry, mark: liveMark, usedMargin, effMargin, mmr: getMaintRate(sym),
-          qty, notionalUSDT, side
+          qty, side
         });
         trades.push(panelState);
         feedDiv.appendChild(panelState.node);

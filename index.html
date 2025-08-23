@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Futures Assets Mockup — with 6M Trend Profit Cards (Top bars fixed, Frame Removed, +20 trades, random small-loss duo, Margin Saved)</title>
+  <title>Futures Assets Mockup — with 6M Trend Profit Cards (Top bars fixed, Frame Removed, +20 trades, random small-loss duo) — Margin Persistent</title>
 
   <!-- Fonts & Icons -->
   <link href="https://db.onlinewebfonts.com/c/d05c19ccecf7003d248c60ffd6b5e8f7?family=Binance+PLEX" rel="stylesheet"/>
@@ -358,11 +358,6 @@
     window.addEventListener('resize', sizeFeed);
     document.addEventListener('DOMContentLoaded', sizeFeed);
 
-    /* ===== SIMPLE LOCAL STORAGE HELPERS (Persist Margins across refresh) ===== */
-    const LS_PREFIX = 'fmock:';
-    const lsGetNum = (k) => { try { const v = localStorage.getItem(LS_PREFIX + k); if (v === null) return null; const n = parseFloat(v); return Number.isFinite(n) ? n : null; } catch { return null; } };
-    const lsSetNum = (k, v) => { try { localStorage.setItem(LS_PREFIX + k, String(v)); } catch {} };
-
     /* ===== Top panel utils ===== */
     const fmtMoney = (n) =>
       "$" + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -374,15 +369,19 @@
     const realizedSpan = document.getElementById("realizedSpan");
     const eye = document.getElementById("eyeToggle");
 
+    // ==== RANDOM MARGIN BALANCE RANGE (Lakhs 3.5 – 5.0) ====
+    const BAL_MIN = 350000, BAL_MAX = 500000; // USD 350k–500k
+    const REALIZED_MIN_PCT = 0.50, REALIZED_MAX_PCT = 2.00;
+
     let showTop = true;
-    let marginBalanceTarget = 0;   // << Persisted so Margin Balance stays same after refresh
+    let marginBalanceTarget = 0;
     let realizedTodayUSD = 0;
     let realizedTodayPct = 0;
-    let walletBalance = 0;         // locked after init based on target
+    let walletBalance = 0;     // locked after init
     let unrealizedSum = 0;
 
     function refreshTop(){
-      amountEl.textContent   = showTop ? fmtMoney(walletBalance + unrealizedSum) : "•••••••";  // equals target
+      amountEl.textContent   = showTop ? fmtMoney(walletBalance + unrealizedSum) : "•••••••";
       walletEl.textContent   = showTop ? fmtMoney(walletBalance) : "•••••••";
       unrealEl.textContent   = showTop ? fmtMoney(unrealizedSum) : "•••••••";
       realizedSpan.textContent = showTop ? `${fmtMoney(realizedTodayUSD)} (${fmtPct(realizedTodayPct)})` : "•••••••";
@@ -428,6 +427,26 @@
       }
       return arr;
     }
+
+    /* ====== NEW: Margin persistence (localStorage) ====== */
+    const MARGIN_STORE_KEY = 'futures_mock_saved_margins_v1';
+    const round2 = (x) => Math.round((Number(x)||0) * 100) / 100;
+
+    function loadSavedMargins(){
+      try { return JSON.parse(localStorage.getItem(MARGIN_STORE_KEY)) || {}; }
+      catch { return {}; }
+    }
+    function saveMarginForSymbol(sym, used, eff, lev){
+      const store = loadSavedMargins();
+      store[sym] = { used: round2(used), eff: round2(eff), lev: Math.max(1, parseInt(lev||10,10)) };
+      localStorage.setItem(MARGIN_STORE_KEY, JSON.stringify(store));
+    }
+    function getSavedForSymbol(sym){
+      const store = loadSavedMargins();
+      return store[sym];
+    }
+    // Optional helper from console: window.resetSavedMargins()
+    window.resetSavedMargins = function(){ localStorage.removeItem(MARGIN_STORE_KEY); location.reload(); };
 
     /* ===== Market meta (tick & step sizes) ===== */
     const marketMeta = Object.create(null);
@@ -716,7 +735,7 @@
     /* ===== Live init + WS updates ===== */
     const trades = [];
     let symbols = shuffle(allSymbols.slice());
-    const tradeCount = 60; // <<<< increased by +20 (was 40)
+    const tradeCount = 60; // increased by +20 (was 40)
 
     function shuffleFeed(){
       const nodes = Array.from(feedDiv.children);
@@ -741,9 +760,8 @@
       ]));
       const entryMap = await loadSixMonthEntryMap(poolForEntry);
 
-      // Default random ranges (only used on FIRST run; then persisted)
+      // Margin used per-position (USDT) — default range for first-time symbols
       const MARGIN_MIN = 50, MARGIN_MAX = 300;
-      const LEV_OPTIONS = [10,20,50,100];
 
       const mainList = primeSymbols.filter(s => marketMeta[s] && isFinite(markMap[s]) && isFinite(entryMap[s]));
       const otherList = symbols.filter(s => !primeSymbols.includes(s) && marketMeta[s] && isFinite(markMap[s]) && isFinite(entryMap[s]));
@@ -757,33 +775,25 @@
         const sixMEntryRaw = entryMap[sym];
         if (!isFinite(sixMEntryRaw)) continue;
 
-        // === Persisted Leverage / Used Margin / Effective Margin ===
-        let leverage = lsGetNum(`lev:${sym}`);
-        if (!Number.isFinite(leverage)) {
-          leverage = LEV_OPTIONS[Math.floor(Math.random()*LEV_OPTIONS.length)];
-          lsSetNum(`lev:${sym}`, leverage);
-        }
-
-        const mmeta = getMeta(sym);
-        const entry = quantizeToTick(sixMEntryRaw, mmeta.tickSize);
+        const saved = getSavedForSymbol(sym);
+        let leverage = saved?.lev ?? [10,20,50,100][Math.floor(Math.random()*4)];
+        const entry = quantizeToTick(sixMEntryRaw, getMeta(sym).tickSize);
         const side = (liveMark >= entry) ? 'LONG' : 'SHORT';
 
-        let usedMargin = lsGetNum(`um:${sym}`);
-        if (!Number.isFinite(usedMargin)) {
-          usedMargin = MARGIN_MIN + Math.random() * (MARGIN_MAX - MARGIN_MIN);
-          lsSetNum(`um:${sym}`, usedMargin);
-        }
-
-        let effMargin = lsGetNum(`eff:${sym}`);
-        if (!Number.isFinite(effMargin)) {
-          effMargin = usedMargin * (1.5 + Math.random() * 2.5);
-          lsSetNum(`eff:${sym}`, effMargin);
-        }
+        // Use saved usedMargin/effMargin if present; otherwise generate and then persist
+        let usedMargin = saved?.used ?? (MARGIN_MIN + Math.random() * (MARGIN_MAX - MARGIN_MIN));
+        const m = getMeta(sym);
 
         let qtyRaw = qtyFrom(usedMargin, leverage, entry);
-        let qty = quantizeDownToStep(qtyRaw, mmeta.stepSize);
-        if (qty < mmeta.minQty) qty = mmeta.minQty;
+        let qty = quantizeDownToStep(qtyRaw, m.stepSize);
+        if (qty < m.minQty) qty = m.minQty;
+
         const notionalUSDT = entry * qty;
+
+        let effMargin = saved?.eff ?? (usedMargin * (1.5 + Math.random() * 2.5));
+
+        // Persist margins (and leverage) so the card's Margin stays the same after refresh
+        saveMarginForSymbol(sym, usedMargin, effMargin, leverage);
 
         const panelState = createPanel({
           sym, leverage, entry, mark: liveMark, usedMargin, effMargin, mmr: getMaintRate(sym),
@@ -803,12 +813,10 @@
         sum += pnl;
       }
       unrealizedSum = sum;
-      // Keep the overall Margin Balance constant (persisted target)
-      walletBalance = marginBalanceTarget - unrealizedSum;
       refreshTop();
     }
 
-    // >>> Force exactly 2 small-loss cards at random positions (user request)
+    // >>> Force exactly 2 small-loss cards at random positions
     function forceTwoSmallLossesRandom(){
       if (trades.length < 2) return;
       const chosen = new Set();
@@ -875,25 +883,11 @@
     (async function init(){
       sizeFeed(); // compute feed height before data
 
-      // === Persisted Margin Balance Target & Realized PNL ===
-      const BAL_MIN = 350000, BAL_MAX = 500000; // USD 350k–500k
+      const BAL_MIN = 350000, BAL_MAX = 500000;
       const REALIZED_MIN_PCT = 0.50, REALIZED_MAX_PCT = 2.00;
 
-      const savedTarget = lsGetNum('mbTarget');
-      if (Number.isFinite(savedTarget)) {
-        marginBalanceTarget = savedTarget;
-      } else {
-        marginBalanceTarget = Math.round(((BAL_MIN + Math.random()*(BAL_MAX - BAL_MIN)) + Number.EPSILON) * 100) / 100;
-        lsSetNum('mbTarget', marginBalanceTarget);
-      }
-
-      const savedPct = lsGetNum('realizedPct');
-      if (Number.isFinite(savedPct)) {
-        realizedTodayPct = savedPct;
-      } else {
-        realizedTodayPct = REALIZED_MIN_PCT + Math.random()*(REALIZED_MAX_PCT - REALIZED_MIN_PCT);
-        lsSetNum('realizedPct', realizedTodayPct);
-      }
+      marginBalanceTarget = Math.round(((BAL_MIN + Math.random()*(BAL_MAX - BAL_MIN)) + Number.EPSILON) * 100) / 100;
+      realizedTodayPct = REALIZED_MIN_PCT + Math.random()*(REALIZED_MAX_PCT - REALIZED_MIN_PCT);
       realizedTodayUSD = marginBalanceTarget * (realizedTodayPct/100);
 
       await seedWithFuturesMark6M();
@@ -901,14 +895,13 @@
       // apply the 2 small losses at random positions before locking wallet
       forceTwoSmallLossesRandom();
 
-      // Initial unrealized + wallet calc so top shows the persisted target
       let initialUnreal = 0;
       for (const t of trades) {
         initialUnreal += (t.side === 'LONG') ? upnlLong(t.mark, t.entry, t.qty)
                                              : upnlShort(t.mark, t.entry, t.qty);
       }
       unrealizedSum = initialUnreal;
-      walletBalance = marginBalanceTarget - unrealizedSum; // lock wallet so amount == target
+      walletBalance = marginBalanceTarget - unrealizedSum; // lock wallet
       refreshTop();
 
       connectFuturesMarkWS();

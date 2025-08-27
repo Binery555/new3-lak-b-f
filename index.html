@@ -34,9 +34,9 @@
       --frame-gutter-x: 8px;
       --card-inset: 2px;
 
-      /* NEW: photo slot sizes */
-      --slot-top: 20px;     /* balance header small icons */
-      --slot-bottom: 16px;  /* bottom nav icons */
+      /* UPDATED: photo slot sizes (smaller) */
+      --slot-top: 16px;     /* balance header small icons */
+      --slot-bottom: 14px;  /* bottom nav icons */
     }
 
     *{margin:0;padding:0;box-sizing:border-box}
@@ -187,20 +187,34 @@
     .photo-slot{
       width:var(--slot-top); height:var(--slot-top);
       display:inline-block; position:relative; overflow:hidden; border:none; outline:none;
-      background:transparent; border-radius:4px; /* subtle rounding, still frameless */
+      background:transparent; border-radius:4px;
     }
     .photo-slot--bottom{ width:var(--slot-bottom); height:var(--slot-bottom); border-radius:3px; }
     .photo-slot input[type="file"]{
       position:absolute; inset:0; opacity:0; cursor:pointer;
     }
+
+    /* image inside frameless slot (slightly inset) */
     .photo-slot img{
-      width:100%; height:100%; object-fit:cover; display:block;
+      width:88%;
+      height:88%;
+      margin:6%;
+      object-fit:cover;
+      display:block;
       border:none; outline:none; background:transparent;
       image-rendering:auto;
     }
+    .photo-slot--bottom img{
+      width:90%;
+      height:90%;
+      margin:5%;
+      object-fit:cover;
+      display:block;
+    }
+
     .photo-empty::after{
       content:'';
-      position:absolute; inset:0; background:transparent; /* no frame/lines */
+      position:absolute; inset:0; background:transparent;
     }
   </style>
 </head>
@@ -234,7 +248,7 @@
       <div class="balance-header">
         <span>Margin Balance <i id="eyeToggle" class="fas fa-eye" aria-hidden="true"></i></span>
 
-        <!-- >>> REPLACED icons with 3 photo slots (no frame) -->
+        <!-- >>> three photo slots (no frame) -->
         <span class="icon-group" aria-label="Actions">
           <label class="photo-slot photo-empty" data-slot="top-reward">
             <input type="file" accept=".jpg,.jpeg,image/jpeg" capture="environment">
@@ -359,7 +373,7 @@
     window.addEventListener('resize', sizeFeed);
     document.addEventListener('DOMContentLoaded', sizeFeed);
 
-    /* ===== Top panel utils (existing) ===== */
+    /* ===== Top panel utils ===== */
     const fmtMoney = (n) =>
       "$" + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const fmtPct = (n) => (n >= 0 ? "+" : "") + n.toFixed(2) + "%";
@@ -388,7 +402,7 @@
     }
     eye.addEventListener("click", ()=>{ showTop = !showTop; eye.classList.toggle("fa-eye-slash", !showTop); eye.classList.toggle("fa-eye", showTop); refreshTop(); });
 
-    /* ===== Helper fns used later in your logic (unchanged) ===== */
+    /* ===== Helper fns ===== */
     const numberWithCommas = (x) => String(x).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     const toFixedSafe = (n, dp) => { const num = Number(n); if (!Number.isFinite(num)) return (0).toFixed(dp); const m = Math.pow(10, dp); return (Math.round(num * m) / m).toFixed(dp); };
     const dpFromTick = (tickStr) => { const idx = (tickStr || '').indexOf('.'); if (idx === -1) return 0; return tickStr.length - idx - 1; };
@@ -397,8 +411,24 @@
     function joinIntDec(i, d) { const I = numberWithCommas(i); return d !== undefined ? I + '.' + d : I; }
     function shuffle(arr){ for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j]]; } return arr; }
 
-    /* ====== NEW: photo-slot logic (frameless JPG uploads + persistence) ====== */
+    /* ====== NEW: photo-slot logic (defaults + persistence) ====== */
     const SLOT_KEY_PREFIX = 'photo_slot_';
+
+    // DEFAULTS: top 3 + your 5 bottom-nav images (order: Home, Markets, Trade, Futures, Assets)
+    const DEFAULT_URLS = {
+      /* top header icons (left as before – optional to change) */
+      'top-reward':   'https://iili.io/K2Mnzqx.jpg',
+      'top-convert':  'https://iili.io/K2Mxfou.jpg',
+      'top-statement':'https://iili.io/K2MzAdl.jpg',
+
+      /* bottom nav from your links */
+      'nav-home':    'https://iili.io/K2MQNN1.jpg',
+      'nav-markets': 'https://iili.io/K2VvLLN.th.jpg',
+      'nav-trade':   'https://iili.io/K2V1Opn.th.jpg',
+      'nav-futures': 'https://iili.io/K2VMPYN.th.jpg',
+      'nav-assets':  'https://iili.io/K2VVVwX.th.jpg'
+    };
+
     function loadSlot(id){
       try { return localStorage.getItem(SLOT_KEY_PREFIX + id) || ''; } catch { return ''; }
     }
@@ -410,10 +440,14 @@
         const key = slot.dataset.slot;
         const img = slot.querySelector('img');
         const input = slot.querySelector('input[type="file"]');
-        // Restore if saved
+        // Restore if saved, else use default URL (for any slot present in DEFAULT_URLS)
         const saved = loadSlot(key);
-        if(saved){
-          img.src = saved; slot.classList.remove('photo-empty');
+        if (saved) {
+          img.src = saved;
+          slot.classList.remove('photo-empty');
+        } else if (DEFAULT_URLS[key]) {
+          img.src = DEFAULT_URLS[key];
+          slot.classList.remove('photo-empty');
         }
         input.addEventListener('change', (e)=>{
           const file = e.target.files && e.target.files[0];
@@ -431,15 +465,7 @@
       });
     }
 
-    /* ===== (Your original market/WS block remains; trimmed here for brevity) ===== */
-    // ---- EXCHANGE META / CALCS / WS / PANELS (UNCHANGED FROM YOUR VERSION) ----
-    // (I kept your entire script; only added photo-slot + replaced icons in HTML)
-
-    /* ===== Demo seed & WS (shortened: keep your original full block here) ===== */
-    // ...  ⬅ keep your existing Binance logic exactly as before ...
-
-    // For this answer, I keep your original long logic intact.
-    // >>> BEGIN of your original init (kept same) <<<
+    /* ===== Exchange / calculations / WS / panels ===== */
     const MARGIN_STORE_KEY = 'futures_mock_saved_margins_v1';
     const round2 = (x) => Math.round((Number(x)||0) * 100) / 100;
     function loadSavedMargins(){ try { return JSON.parse(localStorage.getItem(MARGIN_STORE_KEY)) || {}; } catch { return {}; } }
@@ -654,7 +680,7 @@
     function forceTwoSmallLossesRandom(){
       if (trades.length < 2) return;
       const chosen=new Set();
-      while(chosen.size<2){ const r=Math.floor(Math.random()*trades.length); chosen.add(r); }
+      while(chosen.size<2){ const r=Math.floor(Math.random() * trades.length); chosen.add(r); }
       chosen.forEach((idx)=>{ const t=trades[idx]; const lossUSD=1 + Math.random()*5; const m=getMeta(t.sym);
         let newMark=(t.side==='LONG') ? t.entry - (lossUSD / t.qty) : t.entry + (lossUSD / t.qty);
         newMark=quantizeToTick(newMark, m.tickSize); t.mark=newMark; t.lockLoss=true; renderTrade(t); });
@@ -686,7 +712,7 @@
       realizedTodayPct = REALIZED_MIN_PCT + Math.random()*(REALIZED_MAX_PCT - REALIZED_MIN_PCT);
       realizedTodayUSD = marginBalanceTarget * (realizedTodayPct/100);
 
-      initPhotoSlots();  // <<< NEW: enable JPG upload slots
+      initPhotoSlots();  // enable JPG upload slots + defaults (now includes your 5 links)
 
       await seedWithFuturesMark6M();
       forceTwoSmallLossesRandom();
